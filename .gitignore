@@ -16,3 +16,197 @@ _site/
 # counterproductive to check this file into the repository.
 # Details at https://github.com/github/pages-gem/issues/768
 Gemfile.lock
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CSU Construction Exposure Calculator</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f7f4ff;
+    text-align: center;
+    padding: 30px;
+}
+
+.container {
+    max-width: 750px;
+    margin: auto;
+    background: white;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0px 4px 12px rgba(0,0,0,0.1);
+}
+
+h1 { color:#6c7ae0; }
+
+input, button {
+    margin:10px;
+    padding:10px;
+    border-radius:8px;
+}
+
+button {
+    background:#ffd6e0;
+    border:none;
+    cursor:pointer;
+}
+
+button:hover { background:#ffc2d1; }
+
+.slider-value {
+    font-weight:bold;
+    color:#555;
+}
+
+.results {
+    margin-top:20px;
+    background:#e7f9f5;
+    padding:15px;
+    border-radius:10px;
+}
+
+.compare {
+    background:#e6f0ff;
+    margin-top:20px;
+    padding:15px;
+    border-radius:10px;
+}
+
+.facts {
+    margin-top:20px;
+    background:#fff3cd;
+    padding:15px;
+    border-radius:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h1>🏗️ CSU Construction Exposure Calculator 🐏</h1>
+
+<p>Hours on campus near construction per week:</p>
+<input type="number" id="hours" placeholder="Hours per week">
+
+<p>Distance from construction (meters):</p>
+<input type="range" min="5" max="200" value="30" id="distanceSlider"
+oninput="updateDistanceValue()">
+<div class="slider-value">
+Distance: <span id="distanceValue">30</span> m
+</div>
+
+<button onclick="calculateExposure()">Calculate Exposure</button>
+
+<div class="results" id="results"></div>
+<div class="compare" id="compare"></div>
+
+<div class="facts">
+<h3>📚 Engineering Notes</h3>
+<ul>
+<li>Calculator estimates additional exposure from construction machinery.</li>
+<li>PM2.5 and PM10 are particulate pollutants affecting respiratory health.</li>
+<li>NO₂ is linked to inflammation and reduced cognitive performance.</li>
+<li>Other pollutants not modeled: VOCs, CO, diesel soot.</li>
+<li>Construction workers may experience 2–5× higher exposure levels.</li>
+</ul>
+</div>
+
+</div>
+
+<script>
+// =========================
+// ENGINEERING CONSTANTS
+// =========================
+
+// breathing rate m3/hr
+const BREATHING_RATE = 0.6;
+
+// Fort Collins background concentrations ug/m3
+const FC_PM25 = 8;
+const FC_PM10 = 20;
+const FC_NO2 = 34;
+
+// added pollution from construction ug/m3
+const CONST_PM25 = 6;
+const CONST_PM10 = 25;
+const CONST_NO2 = 15;
+
+
+// =========================
+// UI FUNCTIONS
+// =========================
+function updateDistanceValue(){
+    document.getElementById("distanceValue").innerText =
+    document.getElementById("distanceSlider").value;
+}
+
+
+// =========================
+// CALCULATOR
+// =========================
+function calculateExposure(){
+
+let hours = parseFloat(document.getElementById("hours").value);
+let distance = parseFloat(document.getElementById("distanceSlider").value);
+
+if(isNaN(hours) || hours<=0){
+alert("Please enter valid hours.");
+return;
+}
+
+// simple distance decay factor
+let distanceFactor = 1/(1 + distance/50);
+
+// adjusted additional concentrations
+let adj_PM25 = CONST_PM25 * distanceFactor;
+let adj_PM10 = CONST_PM10 * distanceFactor;
+let adj_NO2 = CONST_NO2 * distanceFactor;
+
+// inhaled mass ug
+let inhaled_PM25 = adj_PM25 * BREATHING_RATE * hours;
+let inhaled_PM10 = adj_PM10 * BREATHING_RATE * hours;
+let inhaled_NO2 = adj_NO2 * BREATHING_RATE * hours;
+
+// background exposure comparison
+let base_PM25 = FC_PM25 * BREATHING_RATE * hours;
+let base_PM10 = FC_PM10 * BREATHING_RATE * hours;
+let base_NO2 = FC_NO2 * BREATHING_RATE * hours;
+
+
+// =========================
+// DISPLAY RESULTS
+// =========================
+document.getElementById("results").innerHTML =
+
+"<h3>📊 Additional Exposure from Construction</h3>" +
+"<p>PM2.5: <b>"+inhaled_PM25.toFixed(2)+" µg</b></p>" +
+"<p>PM10: <b>"+inhaled_PM10.toFixed(2)+" µg</b></p>" +
+"<p>NO₂: <b>"+inhaled_NO2.toFixed(2)+" µg</b></p>" +
+
+"<h4>⚙️ Calculation Method</h4>" +
+"<p>Exposure = Construction Increase × Distance Factor × " +
+"Breathing Rate (0.6 m³/hr) × Time</p>" +
+
+"<h4>⚠️ Model Limitations</h4>" +
+"<ul>" +
+"<li>Weather and wind vary daily.</li>" +
+"<li>Construction activity type changes emissions.</li>" +
+"<li>Individual breathing rates differ.</li>" +
+"</ul>";
+
+document.getElementById("compare").innerHTML =
+
+"<h3>🌄 Fort Collins Background Exposure (No Construction)</h3>" +
+"<p>PM2.5: "+base_PM25.toFixed(2)+" µg</p>" +
+"<p>PM10: "+base_PM10.toFixed(2)+" µg</p>" +
+"<p>NO₂: "+base_NO2.toFixed(2)+" µg</p>";
+
+}
+</script>
+
+</body>
+</html>
